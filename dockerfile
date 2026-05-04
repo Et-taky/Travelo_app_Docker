@@ -1,5 +1,5 @@
 # ---------- Base ----------
-FROM nginx:alpine
+FROM nginx:1.30-alpine-slim
 
 # Remove default configs
 RUN rm -rf /etc/nginx/conf.d/*
