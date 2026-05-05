@@ -7,7 +7,7 @@
 -- ---------------------------------------------------------------------------
 -- 1. FLIGHTS  (id_flight is AUTO_INCREMENT, we force specific IDs for seeding)
 -- ---------------------------------------------------------------------------
-INSERT IGNORE INTO flight (id_flight, departure_city, departure_airport, arrival_city, arrival_airport, date, departureTime, arrivalTime, company, price)
+INSERT IGNORE INTO flight (id_flight, departure_city, departure_airport, arrival_city, arrival_airport, date, departure_time, arrival_time, company, price)
 VALUES
 (1, 'Casablanca', 'CMN', 'Paris',      'CDG', '2026-06-15', '08:00', '12:30', 'Royal Air Maroc', 1850.00),
 (2, 'Marrakech',  'RAK', 'London',     'LHR', '2026-06-16', '10:15', '14:45', 'Ryanair',         1200.00),
