@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+
+  database:
+    image: mysql:8.0
+    container_name: travelo-database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_vol2:/var/lib/mysql
+    networks:
+      - travelo-network
+
+  backend:
+    image: localhost:5000/travelo-backend:2.0
+    container_name: travelo-backend
+    depends_on:
+      - database
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://travelo-database:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    ports:
+      - "8080:8080"
+    networks:
+      - travelo-network
+
+  frontend:
+    image: localhost:5000/travelo-frontend:2.0
+    container_name: travelo-frontend
+    ports:
+      - "3001:3000"
+    networks:
+      - travelo-network
+
+  nginx:
+    image: localhost:5000/travelo-nginx:2.0
+    container_name: travelo-nginx
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - travelo-network
+
+volumes:
+  mysql_vol2:
+
+networks:
+  travelo-network:
+    driver: bridge
