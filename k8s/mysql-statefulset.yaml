@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: travelo
+
+spec:
+  serviceName: mysql-service
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: mysql
+
+  template:
+    metadata:
+      labels:
+        app: mysql
+
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+
+        ports:
+        - containerPort: 3306
+
+        env:
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: travelo-config
+              key: MYSQL_DATABASE
+
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: travelo-secret
+              key: MYSQL_ROOT_PASSWORD
+
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+
+    spec:
+      accessModes:
+        - ReadWriteOnce
+
+      resources:
+        requests:
+          storage: 1Gi

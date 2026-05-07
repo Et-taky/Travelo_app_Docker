@@ -1,106 +1,94 @@
 version: "3.9"
-
 services:
-
   database:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      # MySQL supports _FILE suffix natively — reads from secret file
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE_FILE: /run/secrets/mysql_database
+    secrets:
+      - mysql_root_password
+      - mysql_database
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - travelo-network
-
     deploy:
       replicas: 1
-
       restart_policy:
         condition: on-failure
-
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
 
   backend:
     image: taky77/travelo-backend:2.0
-
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://travelo_database:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-
+      # Hostname stays as env var (not sensitive)
+      SPRING_DATASOURCE_URL: jdbc:mysql://travelo_database:3306/travelo_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      # Credentials come from secrets
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Taky12345
+    secrets:
+      - db_username
+      - db_password
     networks:
       - travelo-network
-    
-    ports:
-      - "8080:8080"
-
     deploy:
-      replicas: 2
-
+      replicas: 1
       restart_policy:
         condition: on-failure
         delay: 10s
         max_attempts: 5
         window: 120s
-
       resources:
         limits:
           cpus: "1.0"
           memory: 1G
-      
+    ports:
+      - "8080:8080"
 
   frontend:
     image: taky77/travelo-frontend:2.0
-
-    ports:
-      - "3001:3000"
-
     networks:
       - travelo-network
-
     deploy:
-      replicas: 2
-
+      replicas: 1
       restart_policy:
         condition: on-failure
-
+        delay: 5s
+        max_attempts: 5
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
-        
+    ports:
+      - "3001:3000"
 
   nginx:
     image: nginx:1.27
-
     ports:
       - "80:80"
-
     configs:
       - source: nginx_config
         target: /etc/nginx/nginx.conf
     networks:
       - travelo-network
-
     deploy:
       replicas: 1
-
       restart_policy:
         condition: on-failure
-
       resources:
         limits:
           cpus: "0.25"
           memory: 256M
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:80/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
 configs:
   nginx_config:
@@ -112,3 +100,14 @@ networks:
 
 volumes:
   mysql_data:
+
+# Declare secrets as external (already created via CLI)
+secrets:
+  mysql_root_password:
+    external: true
+  mysql_database:
+    external: true
+  db_username:
+    external: true
+  db_password:
+    external: true
