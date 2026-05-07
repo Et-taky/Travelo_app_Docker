@@ -52,23 +52,23 @@ spec:
             cpu: "1"
             memory: "1Gi"
 
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
+        startupProbe:
+          tcpSocket:
             port: 8080
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60    # wait 60s before first check (app takes ~55s)
+          periodSeconds: 5
+          failureThreshold: 12       # 60 + (5×12) = 120s total budget
+
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 70
           periodSeconds: 10
+          failureThreshold: 3
 
         readinessProbe:
-          httpGet:
-            path: /actuator/health
+          tcpSocket:
             port: 8080
-          initialDelaySeconds: 15
+          initialDelaySeconds: 65
           periodSeconds: 5
-
-        startupProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8080
-          failureThreshold: 30
-          periodSeconds: 10
+          failureThreshold: 3
