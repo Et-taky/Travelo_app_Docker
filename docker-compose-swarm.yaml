@@ -3,9 +3,7 @@ services:
   database:
     image: mysql:8.0
     environment:
-      # MySQL supports _FILE suffix for password — reads from secret file
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-      # MYSQL_DATABASE does NOT support _FILE suffix — use plain env var
       MYSQL_DATABASE: travelo_db
     secrets:
       - mysql_root_password
@@ -33,11 +31,9 @@ services:
   travelo_backend:
     image: taky77/travelo-backend:2.2
     environment:
-      # Use the Swarm service name 'database' as hostname
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/travelo_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      # Spring Boot does not support _FILE secrets natively — use env vars
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Taky12345
+      SPRING_DATASOURCE_USERNAME: ${env:MYSQL_ROOT_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${env:MYSQL_ROOT_PASSWORD}
     networks:
       - travelo-net
     deploy:
@@ -68,8 +64,6 @@ services:
         limits:
           cpus: "0.50"
           memory: 512M
-    # Disable the image's broken HEALTHCHECK (uses wget which doesn't exist in alpine-slim)
-    # To fix permanently, rebuild the image with curl installed or use non-slim alpine
     healthcheck:
       test: ["NONE"]
     ports:
@@ -112,7 +106,6 @@ networks:
 volumes:
   mysql_data:
 
-# Only mysql_root_password is actually used
 secrets:
   mysql_root_password:
     external: true
