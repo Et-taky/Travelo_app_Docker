@@ -3,44 +3,49 @@ services:
   database:
     image: mysql:8.0
     environment:
-      # MySQL supports _FILE suffix natively — reads from secret file
+      # MySQL supports _FILE suffix for password — reads from secret file
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-      MYSQL_DATABASE_FILE: /run/secrets/mysql_database
+      # MYSQL_DATABASE does NOT support _FILE suffix — use plain env var
+      MYSQL_DATABASE: travelo_db
     secrets:
       - mysql_root_password
-      - mysql_database
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - travelo-network
+      - travelo-net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+        delay: 5s
+        max_attempts: 10
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
-  backend:
-    image: taky77/travelo-backend:2.0
+  travelo_backend:
+    image: taky77/travelo-backend:2.2
     environment:
-      # Hostname stays as env var (not sensitive)
-      SPRING_DATASOURCE_URL: jdbc:mysql://travelo_database:3306/travelo_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      # Credentials come from secrets
+      # Use the Swarm service name 'database' as hostname
+      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/travelo_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      # Spring Boot does not support _FILE secrets natively — use env vars
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: Taky12345
-    secrets:
-      - db_username
-      - db_password
     networks:
-      - travelo-network
+      - travelo-net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
-        delay: 10s
-        max_attempts: 5
+        delay: 15s
+        max_attempts: 10
         window: 120s
       resources:
         limits:
@@ -49,20 +54,24 @@ services:
     ports:
       - "8080:8080"
 
-  frontend:
+  travelo_frontend:
     image: taky77/travelo-frontend:2.0
     networks:
-      - travelo-network
+      - travelo-net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
         delay: 5s
-        max_attempts: 5
+        max_attempts: 10
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
+    # Disable the image's broken HEALTHCHECK (uses wget which doesn't exist in alpine-slim)
+    # To fix permanently, rebuild the image with curl installed or use non-slim alpine
+    healthcheck:
+      test: ["NONE"]
     ports:
       - "3001:3000"
 
@@ -74,17 +83,19 @@ services:
       - source: nginx_config
         target: /etc/nginx/nginx.conf
     networks:
-      - travelo-network
+      - travelo-net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+        delay: 10s
+        max_attempts: 5
       resources:
         limits:
           cpus: "0.25"
           memory: 256M
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:80/" ]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -95,19 +106,13 @@ configs:
     file: ./swarm-nginx.conf
 
 networks:
-  travelo-network:
+  travelo-net:
     driver: overlay
 
 volumes:
   mysql_data:
 
-# Declare secrets as external (already created via CLI)
+# Only mysql_root_password is actually used
 secrets:
   mysql_root_password:
-    external: true
-  mysql_database:
-    external: true
-  db_username:
-    external: true
-  db_password:
     external: true
