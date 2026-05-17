@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -38,6 +39,8 @@ spec:
             secretKeyRef:
               name: travelo-secret
               key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_ROOT_HOST
+          value: "%"
 
         volumeMounts:
         - name: mysql-data
@@ -75,3 +78,4 @@ spec:
       resources:
         requests:
           storage: 1Gi
+

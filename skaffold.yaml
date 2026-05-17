@@ -1,0 +1,32 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+
+metadata:
+  name: travelo
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: taky77/travelo-frontend
+      context: frontend
+      docker:
+        dockerfile: Dockerfile
+
+    - image: taky77/travelo-backend
+      context: backend
+      docker:
+        dockerfile: dockerfile
+
+    - image: taky77/travelo-nginx
+      context: .
+      docker:
+        dockerfile: dockerfile.nginx
+
+manifests:
+  rawYaml:
+    - k8s/*.yaml
+
+deploy:
+  kubectl: {}

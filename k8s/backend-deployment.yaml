@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -55,20 +56,20 @@ spec:
         startupProbe:
           tcpSocket:
             port: 8080
-          initialDelaySeconds: 60    
+          initialDelaySeconds: 150
           periodSeconds: 5
           failureThreshold: 12      
 
         livenessProbe:
           tcpSocket:
             port: 8080
-          initialDelaySeconds: 70
+          initialDelaySeconds: 150
           periodSeconds: 10
           failureThreshold: 3
 
         readinessProbe:
           tcpSocket:
             port: 8080
-          initialDelaySeconds: 65
+          initialDelaySeconds: 150
           periodSeconds: 5
           failureThreshold: 3
