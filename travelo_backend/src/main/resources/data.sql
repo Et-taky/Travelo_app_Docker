@@ -1,9 +1,3 @@
--- =============================================================================
--- Travelo Test Data - Idempotent seed script
--- Safe for multiple replicas/pods: uses INSERT IGNORE to skip duplicates.
--- MySQL will silently ignore any row whose PRIMARY KEY already exists.
--- =============================================================================
-
 -- ---------------------------------------------------------------------------
 -- 1. FLIGHTS  (id_flight is AUTO_INCREMENT, we force specific IDs for seeding)
 -- ---------------------------------------------------------------------------
@@ -16,7 +10,7 @@ VALUES
 (5, 'Istanbul',   'IST', 'Marrakech',  'RAK', '2026-06-19', '09:30', '12:00', 'Turkish Airlines', 2100.00),
 (6, 'Casablanca', 'CMN', 'Madrid',     'MAD', '2026-06-20', '07:45', '10:15', 'Iberia',          950.00),
 (7, 'London',     'LHR', 'Dubai',      'DXB', '2026-06-21', '20:00', '06:30', 'British Airways',  3800.00),
-(8, 'New York',   'JFK', 'Istanbul',   'IST', '2026-06-22', '18:00', '12:00', 'Turkish Airlines', 5200.00);
+(8, 'New York',   'JFK', 'Istanbul',   'IST', '2026-06-22', '18:00', '12:00', 'Turkish Airlines', 5200.00),
 (9, 'K8s',   'JFK', 'test',   'test', '2026-06-22', '18:00', '12:00', 'K8s Airlines', 5200.00);
 
 -- ---------------------------------------------------------------------------

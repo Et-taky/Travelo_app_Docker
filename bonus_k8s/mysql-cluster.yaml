@@ -1,0 +1,41 @@
+apiVersion: mysql.oracle.com/v2
+kind: InnoDBCluster
+
+metadata:
+  name: mysql
+  namespace: travelo
+
+spec:
+  secretName: travelo-secret
+
+  instances: 3
+
+  router:
+    instances: 1
+    podSpec:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "1Gi"
+
+  tlsUseSelfSigned: true
+
+  datadirVolumeClaimTemplate:
+    accessModes:
+      - ReadWriteOnce
+
+    resources:
+      requests:
+        storage: 1Gi
+
+  podSpec:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
